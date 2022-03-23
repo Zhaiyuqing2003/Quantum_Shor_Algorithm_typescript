@@ -1,0 +1,25 @@
+{
+  "name": "quantum_computer_simulator",
+  "version": "1.0.0",
+  "description": "PHYS 498 Project_1 (remastered), with Shor's algorithm",
+  "main": "./dist/index.js",
+  "scripts": {
+    "test": "parcel index.ts"
+  },
+  "type": "module",
+  "keywords": [
+    "quantum computer",
+    "Shor",
+    "quantum gate"
+  ],
+  "author": "Yuqing Zhai",
+  "license": "MIT",
+  "dependencies": {
+    "numbers": "^0.7.0",
+    "plotly.js-dist": "^2.11.1",
+    "tslib": "^2.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.21"
+  }
+}

@@ -1,0 +1,18 @@
+{
+    "cells": [
+        {
+            "language": "typescript",
+            "source": [
+                "import \"./dist/index.8e9bd240.js\""
+            ],
+            "outputs": []
+        },
+        {
+            "language": "html",
+            "source": [
+                ""
+            ],
+            "outputs": []
+        }
+    ]
+}
