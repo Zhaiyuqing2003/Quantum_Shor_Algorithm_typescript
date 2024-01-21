@@ -75,4 +75,8 @@ export default class Flip implements GateMaybeGettable<GateEnum["Flip"]> {
     isGettable<U extends GeneratorType>(generatorType: U) {
         return generatorType === GeneratorType.StateFunction;
     }
+
+    toString() {
+        return `Flip(${this.startWire}..${this.endWire})`;
+    }
 }

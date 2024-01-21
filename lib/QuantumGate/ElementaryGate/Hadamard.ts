@@ -94,4 +94,8 @@ export default class Hadamard implements GateGettable<GateEnum["Hadamard"]> {
     isGettable<G extends GeneratorType>(_: G) : true {
         return true
     }
+
+    toString() {
+        return `H(${this.wire})`;
+    }
 }

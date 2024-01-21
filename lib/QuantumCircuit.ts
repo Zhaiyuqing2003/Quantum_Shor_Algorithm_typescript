@@ -64,6 +64,10 @@ export class QuantumCircuit<T extends GeneratorType> {
         }
     }
 
+    toString() {
+        return `QuantumCircuit(${this.wireLength})[\n${this.gateArray.map((gate) => '\t' + gate.toString()).join('\n')}\n]`;
+    }
+
     
 }
 

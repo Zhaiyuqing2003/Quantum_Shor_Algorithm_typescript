@@ -95,4 +95,8 @@ export default class Rz implements GateGettable<GateEnum["Rz"]> {
     isGettable<G extends GeneratorType>(_: G): true {
         return true
     }
+
+    toString() {
+        return `Rz(${this.wire}, ${(this.angle/Math.PI).toFixed(4)}PI)`;
+    }
 }

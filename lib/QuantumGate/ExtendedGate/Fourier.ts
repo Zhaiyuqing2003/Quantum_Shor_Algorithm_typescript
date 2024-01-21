@@ -63,4 +63,8 @@ export default class Fourier implements GateNotGettable<GateEnum["Fourier"]> {
     isValidControlWire(controlWire : number) : boolean {
         return controlWire < this.startWire || controlWire >= this.endWire;
     }
+
+    toString() {
+        return `Fourier(${this.startWire}..${this.endWire})`;
+    }
 }

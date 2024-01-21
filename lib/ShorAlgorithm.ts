@@ -60,6 +60,10 @@ const getLowestFraction = (number : number, largestDenominator: number) =>{
 export const classical = (N : number) : number[] => {
     Logger.log(`Split ${N}`);
 
+    if (N === 1) {
+        return []
+    }
+
     if (numbers.prime.millerRabin(N)) {
         return [N];
     } else if (N % 2 === 0) {
@@ -157,17 +161,17 @@ export const quantum = (N : number) : number[] => {
                 const phaseList : {
                     [key: number] : boolean
                 } = {};
-                const quantumWire = phaseEstimationWire(2 * n + 1, QuantumGate.fromBasis({
+                const quantumWire = phaseEstimationWire(2 * n + 1, [QuantumGate.fromBasis({
                     type : GateSymbol.Shor,
                     wireLength : n,
                     startWire : 0,
                     endWire : n,
                     x : randomNumber,
                     N : N
-                }))
+                })])
 
                 // in real case, we couldn't measure state multiple times, but for speed of simulation, we can
-                const state = QuantumVectorState.create(n + 2 * n + 1)
+                const state = QuantumVectorState.unique(n + 2 * n + 1, 1)
                 // const finalState = quantumWire.execute(GeneratorType.StateFunction, AtomizeType.Minimum, state);
                 const finalState = quantumWire.generate(AtomizeStrategy.Min, GeneratorType.VectorStateFunction).execute(state);
 
@@ -183,7 +187,9 @@ export const quantum = (N : number) : number[] => {
 
 
                     // only the first 2 * n + 1 bits are mattered, use bit right shift to get rid of last n bits
-                    const estimatedPhase = (measuredKey >> n) / (2 ** n);
+                    const estimatedPhase = (measuredKey >> n) / (2 ** (2 * n + 1));
+
+                    Logger.log(measuredKey >> n);
                     
                     phaseList[estimatedPhase] = true;
 
@@ -195,7 +201,7 @@ export const quantum = (N : number) : number[] => {
 
                     const [_s, r] = getLowestFraction(estimatedPhase, N);
 
-                    Logger.log(`Attempted s/r : ${estimatedPhase}/${r}`);
+                    Logger.log(`Attempted s/r : ${_s}/${r}`);
 
                     if (randomNumber ** r % N === 1) {
                         // if r is odd

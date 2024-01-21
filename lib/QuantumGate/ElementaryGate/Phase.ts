@@ -74,7 +74,7 @@ export default class Phase implements GateGettable<GateEnum["Phase"]> {
             return state.transform((value, index, _, newState) => { 
                 newState.increment(
                     index,
-                    (index & (1 << (this.wireLength - 1 - this.wire))) === 0 ? value : value.multiply(ComplexNumber.fromPolar(1, this.angle))
+                    (index & (1 << (this.wireLength - 1 - this.wire))) === 0 ? value.clone() : value.multiply(ComplexNumber.fromPolar(1, this.angle))
                 )
             }) as T;
         }
@@ -86,5 +86,9 @@ export default class Phase implements GateGettable<GateEnum["Phase"]> {
 
     isGettable<G extends GeneratorType>(_: G): true {
         return true
+    }
+
+    toString() {
+        return `Phase(${this.wire}, ${(this.angle/Math.PI).toFixed(4)}PI)`;
     }
 }

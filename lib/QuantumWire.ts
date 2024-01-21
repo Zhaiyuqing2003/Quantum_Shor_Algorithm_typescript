@@ -39,4 +39,8 @@ export class QuantumWire {
             this.wireLength, generatorType
         );
     }
+
+    toString() {
+        return `QuantumWire[\n${this.gateArray.map((gate) => '\t' + gate.toString()).join('\n')}\n]`;
+    }
 }

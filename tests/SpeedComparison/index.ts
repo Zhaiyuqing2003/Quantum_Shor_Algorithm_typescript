@@ -11,9 +11,10 @@ import Vector from "../../util/Vector";
 
 // @ts-ignore
 import Plotly from "plotly.js-dist";
+// @ts-ignore
+import parameter from "./speed.json"
 
-
-const generateRandomCircuit = (wireLength : number, gateNumber : number = 100) => {
+const generateRandomCircuit = (wireLength : number, gateNumber : number = 50) => {
     // generator one of three H, CX, P
     const wire = QuantumWire.create(wireLength);
 
@@ -53,152 +54,295 @@ const generateRandomCircuit = (wireLength : number, gateNumber : number = 100) =
     return wire;
 }
 
-
-const testSpeed = (wireLength : number) => {
-    const wire = generateRandomCircuit(wireLength);
-
-    // const circuitIab = wire.generate(AtomizeStrategy.Min, GeneratorType.Matrix);
-    // const genStart3 = performance.now();
-    // const circuitIc = wire.generate(AtomizeStrategy.Min, GeneratorType.SparseMatrix);
-    // const genEnd3 = performance.now();
-    // console.log(`Ic: ${genEnd3 - genStart3} ms`);
-    const genStartII = performance.now();
-    const circuitII = wire.generate(AtomizeStrategy.Min, GeneratorType.StateFunction);
-    const genEndII = performance.now();
-    console.log(`II: ${genEndII - genStartII} ms`);
-
-    // const genStartIII = performance.now();
-    // const circuitIII = wire.generate(AtomizeStrategy.Min, GeneratorType.VectorFunction);
-    // const genEndIII = performance.now();
-    // console.log(`III: ${genEndIII - genStartIII} ms`);
-
-    const genStartIV = performance.now();
-    const circuitIV = wire.generate(AtomizeStrategy.Min, GeneratorType.VectorStateFunction);
-    const genEndIV = performance.now();
-    console.log(`IV: ${genEndIV - genStartIV} ms`);
-
-    const vec = Vector.zeros(2 ** wireLength);
-    vec.set(0, ComplexNumber.ONE);
-
-    // simulator Ia
-    // const start = performance.now();
-    // const _Ia = circuitIab.executeMatrix(vec);
-    // const end = performance.now();
-    // console.log(`Ia: ${end - start} ms`);
-    // simulator Ib
-    // const start2 = performance.now();
-    // const _Ib = circuitIab.execute(vec);
-    // const end2 = performance.now();
-    // console.log(`Ib: ${end2 - start2} ms`);
-    // simulator Ic
-    // const start3 = performance.now();
-    // circuitIc.execute(vec);
-    // const end3 = performance.now();
-    // console.log(`Ic: ${end3 - start3} ms`);
-    // simulator II
-    const start4 = performance.now();
-    circuitII.execute(QuantumState.zero(wireLength));
-    const end4 = performance.now();
-    console.log(`II: ${end4 - start4} ms`);
-    // simulator III
-    // const start5 = performance.now();
-    // circuitIII.execute(vec);
-    // const end5 = performance.now();
-    // console.log(`III: ${end5 - start5} ms`);
-    // simulator IV
-    const start6 = performance.now();
-    circuitIV.execute(QuantumVectorState.zero(wireLength));
-    const end6 = performance.now();
-    console.log(`IV: ${end6 - start6} ms`);
-    
-}
-
-const testStateFunctionSparse = () => {
+const testSimulatorSpeed = <T extends GeneratorType>(
+    circuitGenerationFn : (wire : QuantumWire) => [QuantumCircuit<T>, number],
+    circuitExecutionFn : (circuit : QuantumCircuit<T>) => number,
+    startWireLength : number = 3, endWireLength = 10, iterations : number = 5, 
+) => {
     return new Promise((resolve) => {
-        const circuitIIData : number[][] = [];
-        const circuitIVData : number[][] = [];
+        const generateTimeData : number[][] = [];
+        const executeTimeData : number[][] = [];
 
-        const startLength = 3;
-        const endLength = 10;
-
-        const iterations = 100
-
-        let currentLength = startLength;
+        let currentWireLength = startWireLength;
         let currentIteration = 0;
 
         const iter = () => {
-            if (currentLength >= endLength && currentIteration >= iterations) {
+            if (currentWireLength >= endWireLength && currentIteration >= iterations) {
                 resolve({
-                    circuitIIData,
-                    circuitIVData
+                    generateTimeData,
+                    executeTimeData
                 });
                 return;
             }
 
-            if (currentLength < endLength && currentIteration >= iterations) {
-                currentLength++;
+            if (currentWireLength < endWireLength && currentIteration >= iterations) {
+                currentWireLength++;
                 currentIteration = 0;
             }
 
-            if (circuitIIData[currentLength] === undefined) {
-                circuitIIData[currentLength] = [];
+            if (generateTimeData[currentWireLength] === undefined) {
+                generateTimeData[currentWireLength] = [];
             }
 
-            if (circuitIVData[currentLength] === undefined) {
-                circuitIVData[currentLength] = [];
+            if (executeTimeData[currentWireLength] === undefined) {
+                executeTimeData[currentWireLength] = [];
             }
 
-            const wire = generateRandomCircuit(currentLength);
-    
-            const circuitII = wire.generate(AtomizeStrategy.Min, GeneratorType.StateFunction);    
-            const circuitIV = wire.generate(AtomizeStrategy.Min, GeneratorType.VectorStateFunction);
+            const wire = generateRandomCircuit(currentWireLength);
     
 
-            const startII = performance.now();
-            circuitII.execute(QuantumState.zero(currentLength));
-            const endII = performance.now();
+            const [circuit, deltaGenTime] = circuitGenerationFn(wire);
 
-            circuitIIData[currentLength].push(endII - startII);
+            generateTimeData[currentWireLength].push(deltaGenTime);
 
-            const startIV = performance.now();
-            circuitIV.execute(QuantumVectorState.zero(currentLength));
-            const endIV = performance.now();
+            const deltaRuntime = circuitExecutionFn(circuit);
 
-            circuitIVData[currentLength].push(endIV - startIV);
+            executeTimeData[currentWireLength].push(deltaRuntime);
 
-            console.log(`${currentLength}: ${currentIteration}`);
+            console.log(`Wire length: ${currentWireLength}, iteration: ${currentIteration}`);
+
             currentIteration++;
-
             setTimeout(iter, 0);
         }
-
         setTimeout(iter, 0);
     }) as Promise<{
-        circuitIIData : number[][],
-        circuitIVData : number[][]
+        generateTimeData : number[][],
+        executeTimeData : number[][]
     }>;
 }
+const testAllSimulator = async () => {
+    const {
+        generateTimeData : IaGenData,
+        executeTimeData : IaExecData
+    } = await testSimulatorSpeed(
+        (wire) => {
+            const startGenTime = performance.now();
+            const circuitIa = wire.generate(AtomizeStrategy.Min, GeneratorType.Matrix);
+            const endGenTime = performance.now();
+            return [circuitIa, endGenTime - startGenTime];
+        },
+        (circuit) => {
+            const vec = Vector.zeros(2 ** circuit.wireLength);
+            vec.set(0, ComplexNumber.ONE);
 
-// console.log("1")
+            const startExecTime = performance.now();
+            circuit.executeMatrix(vec);
+            const endExecTime = performance.now();
+            return endExecTime - startExecTime;
+        }
+    , 3, 7, 5);
 
-// for (let index in circuitIIData) {
-//     Promise.all(circuitIIData[index]).then(values => {
-//         console.log(`II at ${index} wire: ${values.reduce((a, b) => a + b) / values.length} ms`);
-//     })
-// }
+    const {
+        generateTimeData : IbGenData,
+        executeTimeData : IbExecData
+    } = await testSimulatorSpeed(
+        (wire) => {
+            const startGenTime = performance.now();
+            const circuitIa = wire.generate(AtomizeStrategy.Min, GeneratorType.Matrix);
+            const endGenTime = performance.now();
+            return [circuitIa, endGenTime - startGenTime];
+        },
+        (circuit) => {
+            const vec = Vector.zeros(2 ** circuit.wireLength);
+            vec.set(0, ComplexNumber.ONE);
 
-// for (let index in circuitIVData) {
-//     Promise.all(circuitIVData[index]).then(values => {
-//         console.log(`IV at ${index} wire: ${values.reduce((a, b) => a + b) / values.length} ms`);
-//     })
-// }
+            const startExecTime = performance.now();
+            circuit.execute(vec);
+            const endExecTime = performance.now();
+            return endExecTime - startExecTime;
+        }
+    , 3, 9, 5)
+
+    const {
+        generateTimeData : IcGenData,
+        executeTimeData : IcExecData
+    } = await testSimulatorSpeed(
+        (wire) => {
+            const startGenTime = performance.now();
+            const circuitIc = wire.generate(AtomizeStrategy.Min, GeneratorType.SparseMatrix);
+            const endGenTime = performance.now();
+            return [circuitIc, endGenTime - startGenTime];
+        },
+        (circuit) => {
+            const vec = Vector.zeros(2 ** circuit.wireLength);
+            vec.set(0, ComplexNumber.ONE);
+
+            const startExecTime = performance.now();
+            circuit.execute(vec);
+            const endExecTime = performance.now();
+            return endExecTime - startExecTime;
+        },
+    3, 15, 5);
+
+    const {
+        generateTimeData : IIGenData,
+        executeTimeData : IIExecData
+    } = await testSimulatorSpeed(
+        (wire) => {
+            const startGenTime = performance.now();
+            const circuitII = wire.generate(AtomizeStrategy.Min, GeneratorType.StateFunction);
+            const endGenTime = performance.now();
+            return [circuitII, endGenTime - startGenTime];
+        },
+        (circuit) => {
+            const startExecTime = performance.now();
+            circuit.execute(QuantumState.zero(circuit.wireLength));
+            const endExecTime = performance.now();
+            return endExecTime - startExecTime;
+        },
+    3, 20, 20);
+
+    const {
+        generateTimeData : IIIGenData,
+        executeTimeData : IIIExecData
+    } = await testSimulatorSpeed(
+        (wire) => {
+            const startGenTime = performance.now();
+            const circuitII = wire.generate(AtomizeStrategy.Min, GeneratorType.VectorFunction);
+            const endGenTime = performance.now();
+            return [circuitII, endGenTime - startGenTime];
+        },
+        (circuit) => {
+            const vec = Vector.zeros(2 ** circuit.wireLength);
+            vec.set(0, ComplexNumber.ONE);
+
+            const startExecTime = performance.now();
+            circuit.execute(vec);
+            const endExecTime = performance.now();
+            return endExecTime - startExecTime;
+        },
+    3, 15, 5)
+
+    const {
+        generateTimeData : IVGenData,
+        executeTimeData : IVExecData
+    } = await testSimulatorSpeed(
+        (wire) => {
+            const startGenTime = performance.now();
+            const circuitII = wire.generate(AtomizeStrategy.Min, GeneratorType.VectorStateFunction);
+            const endGenTime = performance.now();
+            return [circuitII, endGenTime - startGenTime];
+        },
+        (circuit) => {
+            const startExecTime = performance.now();
+            circuit.execute(QuantumVectorState.zero(circuit.wireLength));
+            const endExecTime = performance.now();
+            return endExecTime - startExecTime;
+        },
+    3, 20, 20)
+
+    return [
+        ["Ia Function", IaGenData, IaExecData],
+        ["Ib Function", IbGenData, IbExecData],
+        ["Ic Function", IcGenData, IcExecData],
+        ["II Function", IIGenData, IIExecData],
+        ["III Function", IIIGenData, IIIExecData],
+        ["IV Function", IVGenData, IVExecData],
+    ] as [string, number[][], number[][]][];
+}
 
 window.onload = () => {
-    testStateFunctionSparse().then(({ circuitIIData, circuitIVData }) => {
-        const avgIIData = circuitIIData.map(arr => arr?.reduce((a, b) => a + b) / arr.length);
-        const avgIVData = circuitIVData.map(arr => arr?.reduce((a, b) => a + b) / arr.length);
+    (document.querySelector("#generation_lines") as HTMLDivElement)!.style.height = "100vh";
+    (document.querySelector("#execution_lines") as HTMLDivElement)!.style.height = "100vh";
+    (document.querySelector("#sum_lines") as HTMLDivElement)!.style.height = "100vh"
 
-        console.log(avgIIData);
-        console.log(avgIVData);        
-    });
+    // get the hash tag
+    const hash = window.location.hash.substring(1);
+    const testFn = (hash === "UseCache") 
+        ? () => Promise.resolve(parameter.data as [string, number[][], number[][]][]) 
+        : testAllSimulator;
+
+    testFn().then((data) => {
+        console.log(data);
+        downloadJSON(JSON.stringify({ data }));
+
+        const generationPlotData = data.map(([name, genData], index) => {
+            genData.forEach((arr, index) => {
+                if (arr === null) {
+                    delete genData[index];
+                }
+            })
+
+            console.log(genData);
+
+
+            const avgData = genData.map((arr) => arr?.reduce((a, b) => a + b) / arr?.length);
+            return {
+                x : Object.keys(avgData).map(Number),
+                y : Object.values(avgData),
+                name
+            }
+        })
+
+        const executionPlotData = data.map(([name, _, execData], index) => {
+            execData.forEach((arr, index) => {
+                if (arr === null) {
+                    delete execData[index];
+                }
+            })
+
+            const avgData = execData.map((arr) => arr?.reduce((a, b) => a + b) / arr?.length);
+            return {
+                x : Object.keys(avgData).map(Number),
+                y : Object.values(avgData),
+                name
+            }
+        })
+
+        const sumPlotData = data.map(([name, genData, execData], index) => {
+            const genAvgData = genData.map((arr) => arr?.reduce((a, b) => a + b) / arr?.length);
+            const execAvgData = execData.map((arr) => arr?.reduce((a, b) => a + b) / arr?.length);
+
+            const sumAvgData = genAvgData.map((gen, index) => gen + execAvgData[index]);
+
+            return {
+                x : Object.keys(sumAvgData).map(Number),
+                y : Object.values(sumAvgData),
+                name
+            }
+        })
+
+
+        const layout = {
+            xaxis : {
+                title : "Wire Length",
+            },
+            yaxis : {
+                type : 'log',
+                title : "Execution Time (ms)",
+            },
+        }
+
+        Plotly.newPlot("generation_lines", generationPlotData, {
+            ...layout,
+            title : "Simulator Generation Speed Comparison",
+        }, {
+            responsive : true,
+        });
+
+        Plotly.newPlot("execution_lines", executionPlotData, {
+            ...layout,
+            title : "Simulator Execution Speed Comparison",
+        }, {
+            responsive : true,
+        });
+
+        Plotly.newPlot("sum_lines", sumPlotData, {
+            ...layout,
+            title : "Simulator Speed Comparison",
+        }, {
+            responsive : true,
+        });
+    })
+}
+
+const downloadJSON = (json : string) => {
+    // let browser download the file
+    const element = document.createElement("a");
+    element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(json));
+    element.setAttribute("download", "parameter.json");
+    element.style.display = "none";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }

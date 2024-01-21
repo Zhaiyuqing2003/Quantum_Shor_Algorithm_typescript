@@ -125,4 +125,8 @@ export default class Swap implements GateNotGettable<GateEnum["Swap"]> {
     isGettable<G extends GeneratorType>(_: G): false {
         return false;
     }
+
+    toString() {
+        return `Swap(${this.wireOne}<->${this.wireTwo})`;
+    }
 }

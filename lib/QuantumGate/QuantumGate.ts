@@ -89,7 +89,7 @@ export class QuantumGate {
         return QuantumGate.create(gate.basis.clone(), new Set(), gate.isInverse) as unknown as T & Uncontrolled;
     }
 
-    static toControlled<T extends QuantumGate>(gate : (T & Uncontrolled) | T, controlWire : number[]) : T & Controlled {
+    static toControlled<T extends QuantumGate>(gate : (T & Uncontrolled) | T, controlWire : Set<number>) : T & Controlled {
         const newSet = new Set(controlWire);
 
         // add controlWire to the original set
@@ -114,7 +114,9 @@ export class QuantumGate {
         return QuantumGate.create(this.basis.shift(parameter), this.controlWire, this.isInverse);
     }
 
-
+    toString() {
+        return `${this.isInverse ? "Inv-" : ""}${this.basis.toString()}${this.controlWire.size > 0 ? ` Control(${Array.from(this.controlWire).join(",")})` : ""}`;
+    }
 
     clone() {
         return new QuantumGate(this.basis.clone(), new Set(this.controlWire), this.isInverse);
@@ -267,15 +269,15 @@ export class QuantumGate {
         const checkerNumber = [...this.controlWire].reduce((acc, wire) => acc + 2 ** (this.wireLength - wire - 1), 0)
         
         
-        return (state : Vector | QuantumVectorState) => {
+        return <T extends Vector | QuantumVectorState>(state : T) => {
             requireLengthMatched(state, this.wireLength);
 
             const [acceptedState, rejectedState] = state.split((_, key) => 
                 (key & checkerNumber) === checkerNumber
-            )
+            ) as [T, T]
 
             return basis.getNumberStateFunction()(acceptedState as QuantumVectorState & Vector)
-                        .combine(rejectedState as QuantumVectorState & Vector);
+                        .combine(rejectedState as QuantumVectorState & Vector) as T;
         }
     }
 

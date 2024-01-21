@@ -34,7 +34,7 @@ export class AtomizeStrategy {
         }
 
         // further atomize the list
-        return atomizedGateList.map(g => this.All(g, generatorType)).flat();
+        return atomizedGateList.map(g => AtomizeStrategy.All(g, generatorType)).flat();
     }
     static Max(gate : QuantumGate, generatorType : GeneratorType) : QuantumGate[] {
         if (gate.isElementaryGate()) {
@@ -46,7 +46,7 @@ export class AtomizeStrategy {
 
         if (atomizedGateList !== null) {
             // further atomize the list
-            return atomizedGateList.map(g => this.Max(g, generatorType)).flat();
+            return atomizedGateList.map(g => AtomizeStrategy.Max(g, generatorType)).flat();
         }
 
         // cannot atomize the gate, try to get it
@@ -73,7 +73,7 @@ export class AtomizeStrategy {
         }
 
         // further atomize the list
-        return atomizedGateList.map(g => this.Min(g, generatorType)).flat();;
+        return atomizedGateList.map(g => AtomizeStrategy.Min(g, generatorType)).flat();;
     }
     static None(gate : QuantumGate, generatorType : GeneratorType) : QuantumGate[] {
         if (gate.isGettable(generatorType)) {
@@ -85,24 +85,24 @@ export class AtomizeStrategy {
 }
 
 
-class Atomizer {
+export class Atomizer {
     private constructor() {};
 
     // 1 depth atomization
     static atomize(gate : QuantumGate) : QuantumGate[] | null {
         if (gate.isNotInverted()) {
             if (gate.isUncontrolled()) {
-                return this.atomizeNotInvertedUncontrolled(gate);
+                return Atomizer.atomizeNotInvertedUncontrolled(gate);
             } else if (gate.isSinglyControlled()) {
-                return this.atomizeNotInvertedSinglyControlled(gate);
+                return Atomizer.atomizeNotInvertedSinglyControlled(gate);
             } else {
                 return null;
             }
         } else if (gate.isInverted()) {
             if (gate.isUncontrolled()) {
-                return this.atomizeInvertedUncontrolled(gate);
+                return Atomizer.atomizeInvertedUncontrolled(gate);
             } else if (gate.isControlled()) {
-                return this.atomizeInvertedControlled(gate);
+                return Atomizer.atomizeInvertedControlled(gate);
             } else {
                 return null;
             }
@@ -113,56 +113,56 @@ class Atomizer {
 
     static atomizeNotInvertedUncontrolled(gate : QuantumGate & NotInverted & Uncontrolled) : QuantumGate[] | null {
         if (gate.isBasedOn(Hadamard)) {
-            return this.NotInvertedUncontrolledHadamard(gate);
+            return Atomizer.NotInvertedUncontrolledHadamard(gate);
         } else if (gate.isBasedOn(PauliX)) {
-            return this.NotInvertedUncontrolledPauliX(gate);
+            return Atomizer.NotInvertedUncontrolledPauliX(gate);
         } else if (gate.isBasedOn(Phase)) {
-            return this.NotInvertedUncontrolledPhase(gate);
+            return Atomizer.NotInvertedUncontrolledPhase(gate);
         } else if (gate.isBasedOn(Rz)) {
-            return this.NotInvertedUncontrolledRz(gate);
+            return Atomizer.NotInvertedUncontrolledRz(gate);
         } else if (gate.isBasedOn(Flip)) {
-            return this.NotInvertedUncontrolledFlip(gate);
+            return Atomizer.NotInvertedUncontrolledFlip(gate);
         } else if (gate.isBasedOn(Fourier)) {
-            return this.NotInvertedUncontrolledFourier(gate);
+            return Atomizer.NotInvertedUncontrolledFourier(gate);
         } else if (gate.isBasedOn(Swap)) {
-            return this.NotInvertedUncontrolledSwap(gate);
+            return Atomizer.NotInvertedUncontrolledSwap(gate);
         } else {
             return null;
         }
     }
     static atomizeNotInvertedSinglyControlled(gate : QuantumGate & NotInverted & SinglyControlled) : QuantumGate[] | null {
         if (gate.isBasedOn(PauliX)) {
-            return this.NotInvertedSinglyControlledPauliX(gate);
+            return Atomizer.NotInvertedSinglyControlledPauliX(gate);
         } else if (gate.isBasedOn(Phase)) {
-            return this.NotInvertedSinglyControlledPhase(gate);
+            return Atomizer.NotInvertedSinglyControlledPhase(gate);
         } else if (gate.isBasedOn(Rz)) {
-            return this.NotInvertedSinglyControlledRz(gate);
+            return Atomizer.NotInvertedSinglyControlledRz(gate);
         } else {
             return null;
         }
     }
     static atomizeInvertedUncontrolled(gate : QuantumGate & Inverted & Uncontrolled) : QuantumGate[] | null {
         if (gate.isBasedOn(Hadamard)) {
-            return this.InvertedUncontrolledHadamard(gate);
+            return Atomizer.InvertedUncontrolledHadamard(gate);
         } else if (gate.isBasedOn(PauliX)) {
-            return this.InvertedUncontrolledPauliX(gate);
+            return Atomizer.InvertedUncontrolledPauliX(gate);
         } else if (gate.isBasedOn(Phase)) {
-            return this.InvertedUncontrolledPhase(gate);
+            return Atomizer.InvertedUncontrolledPhase(gate);
         } else if (gate.isBasedOn(Rz)) {
-            return this.InvertedUncontrolledRz(gate);
+            return Atomizer.InvertedUncontrolledRz(gate);
         } else if (gate.isBasedOn(Flip)) {
-            return this.InvertedUncontrolledFlip(gate);
+            return Atomizer.InvertedUncontrolledFlip(gate);
         } else if (gate.isBasedOn(Fourier)) {
-            return this.InvertedUncontrolledFourier(gate);
+            return Atomizer.InvertedUncontrolledFourier(gate);
         } else if (gate.isBasedOn(Swap)) {
-            return this.InvertedUncontrolledSwap(gate);
+            return Atomizer.InvertedUncontrolledSwap(gate);
         } else {
             return null;
         }
     }
     static atomizeInvertedControlled(gate : QuantumGate & Inverted & Controlled) : QuantumGate[] | null {
         // construct the uncontrolled version first
-        const uncontrolledGate = this.atomizeInvertedUncontrolled(QuantumGate.toUncontrolled(gate));
+        const uncontrolledGate = Atomizer.atomizeInvertedUncontrolled(QuantumGate.toUncontrolled(gate));
 
         if (uncontrolledGate === null) {
             return null;
@@ -251,14 +251,22 @@ class Atomizer {
         const startWire = basis.startWire;
         const wireLength = basis.wireLength;
         const endWire = basis.endWire;
+
+        returnArray.push(QuantumGate.fromBasis({
+            type : GateSymbol.Flip,
+            wireLength,
+            startWire : startWire,
+            endWire : endWire
+        }))
         
         for (let i = endWire - 1; i >= startWire; i --) {
-            for (let j = endWire - 1; j > 1; j --) {
-                returnArray.push(QuantumGate.fromBasis({
+            for (let j = endWire - 1; j > i; j --) {
+                returnArray.push(QuantumGate.fromSingleControlled({
                     type : GateSymbol.Phase,
                     wireLength,
                     wire : j,
-                    angle : Math.PI / (2 ** (j - 1))
+                    controlWire : i,
+                    angle : Math.PI / (2 ** (j - i))
                 }))
             }
 
@@ -269,13 +277,6 @@ class Atomizer {
             }))
         }
         
-        returnArray.push(QuantumGate.fromBasis({
-            type : GateSymbol.Flip,
-            wireLength,
-            startWire : startWire,
-            endWire : endWire
-        }))
-    
         return returnArray;
     }
     static NotInvertedUncontrolledSwap = (gate : QuantumGate & NotInvertedUncontrolledBasedOn<GateEnum["Swap"]>) => {
@@ -305,11 +306,12 @@ class Atomizer {
     static NotInvertedSinglyControlledPauliX = (gate : QuantumGate & NotInvertedSinglyControlledBasedOn<GateEnum["PauliX"]>) => [gate.clone()];
     static NotInvertedSinglyControlledRz = (gate : QuantumGate & NotInvertedSinglyControlledBasedOn<GateEnum["Rz"]>) => {
         // C-PauliX Phase -theta/2 C-PauliX Phase theta/2
+        const gateControlWire = [...gate.controlWire.keys()][0]
         return [
             QuantumGate.fromSingleControlled({
                 type: GateSymbol.PauliX,
                 wire: gate.basis.wire,
-                controlWire: gate.controlWire[0],
+                controlWire: gateControlWire,
                 wireLength : gate.wireLength
             }),
             QuantumGate.fromBasis({
@@ -321,7 +323,7 @@ class Atomizer {
             QuantumGate.fromSingleControlled({
                 type: GateSymbol.PauliX,
                 wire: gate.basis.wire,
-                controlWire: gate.controlWire[0],
+                controlWire: gateControlWire,
                 wireLength : gate.wireLength
             }),
             QuantumGate.fromBasis({
@@ -334,17 +336,18 @@ class Atomizer {
     }
     static NotInvertedSinglyControlledPhase = (gate : QuantumGate & NotInvertedSinglyControlledBasedOn<GateEnum["Phase"]>) => {
         // Phase theta / 2 C-Rz
+        const gateControlWire = [...gate.controlWire.keys()][0]
         return [
             QuantumGate.fromBasis({
                 type: GateSymbol.Phase,
-                wire: gate.controlWire[0],
+                wire: gateControlWire,
                 angle : gate.basis.angle / 2,
                 wireLength : gate.wireLength
             }),
             QuantumGate.fromSingleControlled({
                 type: GateSymbol.Rz,
                 wire: gate.basis.wire,
-                controlWire: gate.controlWire[0],
+                controlWire: gateControlWire,
                 angle : gate.basis.angle,
                 wireLength : gate.wireLength
             })
@@ -353,8 +356,8 @@ class Atomizer {
 
 
 
-    static InvertedUncontrolledHadamard = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Hadamard"]>) => [gate.clone()];
-    static InvertedUncontrolledPauliX = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["PauliX"]>) => [gate.clone()];
+    static InvertedUncontrolledHadamard = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Hadamard"]>) => [gate.toInverted()];
+    static InvertedUncontrolledPauliX = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["PauliX"]>) => [gate.toInverted()];
     static InvertedUncontrolledPhase = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Phase"]>) => 
         [QuantumGate.fromBasis({
             type : GateSymbol.Phase,
@@ -369,14 +372,14 @@ class Atomizer {
             angle : -gate.basis.angle,
             wireLength : gate.wireLength
         })]
-    static InvertedUncontrolledFlip = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Flip"]>) => [gate.clone()];
-    static InvertedUncontrolledSwap = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Swap"]>) => [gate.clone()];
+    static InvertedUncontrolledFlip = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Flip"]>) => [gate.toInverted()];
+    static InvertedUncontrolledSwap = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Swap"]>) => [gate.toInverted()];
     static InvertedUncontrolledFourier = (gate : QuantumGate & InvertedUncontrolledBasedOn<GateEnum["Fourier"]>) => {
-        return this.NotInvertedUncontrolledFourier(QuantumGate.fromBasis({
+        return Atomizer.NotInvertedUncontrolledFourier(QuantumGate.fromBasis({
             type : GateSymbol.Fourier,
             wireLength : gate.wireLength,
             startWire : gate.basis.startWire,
             endWire : gate.basis.endWire
-        })).reverse();
+        })).reverse().map(gate => gate.toInverted());
     }
 }

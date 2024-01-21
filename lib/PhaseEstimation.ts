@@ -4,18 +4,18 @@ import { QuantumWire } from "./QuantumWire";
 
 export const phaseEstimationWire = (
     estimationWire : number,
-    gate : QuantumGate
+    gateList : QuantumGate[]
 ) => {
     if (estimationWire < 1) {
         throw new Error("Estimation wire must be greater than 0.");
     }
-    const gateLength = gate.wireLength;
+    const gateLength = gateList[0].wireLength;
     const wireLength = gateLength + estimationWire;
 
-    const shiftedGate = gate.shiftBasis({
+    const shiftedGateList = gateList.map((gate) => gate.shiftBasis({
         shift: estimationWire,
         wireLength
-    })
+    }))
 
     const wire = QuantumWire.create(wireLength);
 
@@ -29,7 +29,9 @@ export const phaseEstimationWire = (
 
     for (let i = estimationWire - 1; i >= 0; i --) {
         for (let _ = 0; _ < 2 ** (estimationWire - i - 1); _++) {
-            wire.addGate(QuantumGate.toSinglyControlled(shiftedGate, i))
+            shiftedGateList.forEach((shiftedGate) => {
+                wire.addGate(QuantumGate.toSinglyControlled(shiftedGate, i))
+            })
         }
     }
 
@@ -37,7 +39,7 @@ export const phaseEstimationWire = (
     wire.addGate(QuantumGate.fromBasis({
         type : GateSymbol.Fourier,
         startWire : 0,
-        endWire : gateLength,
+        endWire : estimationWire,
         wireLength,
     }).toInverted())
 

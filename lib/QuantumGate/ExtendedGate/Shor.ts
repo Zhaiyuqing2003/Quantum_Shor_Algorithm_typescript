@@ -121,9 +121,15 @@ export default class Shor implements GateMaybeGettable<GateEnum["Shor"]> {
     isGettable<G extends GeneratorType>(generatorType: G): boolean {
         switch (generatorType) {
             case GeneratorType.StateFunction:
+            case GeneratorType.VectorFunction:
+            case GeneratorType.VectorStateFunction:
                 return true;
             default:
                 return false;
         }
+    }
+
+    toString() {
+        return `Shor(${this.startWire}..${this.endWire}, ${this.x}, ${this.N})`;
     }
 }

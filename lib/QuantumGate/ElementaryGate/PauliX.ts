@@ -83,4 +83,8 @@ export default class PauliX implements GateGettable<GateEnum["PauliX"]> {
     isGettable<G extends GeneratorType>(_: G): true {
         return true
     }
+
+    toString() {
+        return `PauliX(${this.wire})`;
+    }
 }

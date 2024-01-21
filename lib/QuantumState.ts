@@ -171,7 +171,7 @@ export default class QuantumState {
         const randomNumber = Math.random();
         let currentValue = 0;
         
-        for (const [key, value] of probabilityList) {
+        for (const [key, value] of probabilityList) {2
             currentValue += value;
             if (randomNumber < currentValue) {
                 return key;
